@@ -445,4 +445,51 @@ export async function createOrderInSupabase(order: CustomerOrder): Promise<{ suc
   } catch (err: any) {
     return { success: true, orderId: `BM-${Math.floor(100000 + Math.random() * 900000)}`, message: 'Pedido completado con éxito' };
   }
+}// Helper: Save / Update Product in Supabase DB
+export async function saveProductToSupabase(product: Product): Promise<{ success: boolean; error?: string }> {
+  try {
+    const payload: any = {
+      nombre: product.nombre,
+      descripcion: product.descripcion,
+      precio: product.precio,
+      precio_anterior: product.precio_anterior,
+      imagen_url: product.imagen_url,
+      categoria: product.categoria,
+      subcategoria: product.subcategoria,
+      stock: product.stock,
+      destacado: product.destacado,
+      nuevo: product.nuevo,
+      envio_gratis: product.envio_gratis
+    };
+
+    if (product.id && !product.id.toString().startsWith('db-')) {
+      payload.id = product.id;
+    }
+
+    const tableNames = ['Productos', 'productos', 'Products', 'products'];
+
+    for (const tableName of tableNames) {
+      const { error } = await supabase.from(tableName).upsert([payload]);
+      if (!error) return { success: true };
+    }
+
+    return { success: false, error: 'No se pudo guardar el producto en Supabase.' };
+  } catch (err: any) {
+    console.warn('saveProductToSupabase error:', err);
+    return { success: false, error: err?.message };
+  }
+}
+
+// Helper: Delete Product from Supabase DB
+export async function deleteProductFromSupabase(productId: string | number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const tableNames = ['Productos', 'productos', 'Products', 'products'];
+    for (const tableName of tableNames) {
+      const { error } = await supabase.from(tableName).delete().eq('id', productId);
+      if (!error) return { success: true };
+    }
+    return { success: false, error: 'No se pudo eliminar de Supabase.' };
+  } catch (err: any) {
+    return { success: false, error: err?.message };
+  }
 }
