@@ -2,9 +2,8 @@ import React, { useState } from 'react';
 import { 
   X, ShieldCheck, Store, PackagePlus, ShoppingBag, Database, 
   Save, Plus, Trash2, Edit3, Check, RefreshCw, AlertCircle, 
-  Lock, Instagram, Facebook, Share2, HelpCircle, CreditCard, 
-  Truck, RefreshCw as RefreshIcon, Mail, ToggleLeft, ToggleRight,
-  Eye, List
+  Lock, Share2, HelpCircle, CreditCard, 
+  Truck, RefreshCw as RefreshIcon, ToggleLeft, ToggleRight
 } from 'lucide-react';
 import { StoreConfig, Product, CustomerOrder } from '../types';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
@@ -37,7 +36,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   // Config state
   const [formData, setFormData] = useState<StoreConfig>({ ...config });
   const [savingConfig, setSavingConfig] = useState(false);
-  const [configSuccess, setConfigSuccess] = useState(false);
+  const [configMsg, setConfigMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Editing existing product state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -58,10 +57,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const [savingProduct, setSavingProduct] = useState(false);
   const [productMsg, setProductMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // New category state
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
-
   // Orders state
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(false);
@@ -78,40 +73,46 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // --- NUEVA LÓGICA DE GUARDADO DE CONFIGURACIÓN ---
+  // --- LÓGICA ROBUSTA DE GUARDADO DE CONFIGURACIÓN ---
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
-    setConfigSuccess(false);
+    setConfigMsg(null);
 
     try {
-      // 1. Guardar primero en Supabase
+      const payload = [{ id: 1, ...formData }];
+
+      // 1. Intentar en minúsculas 'configuracion'
       let { error } = await supabase
         .from('configuracion')
-        .upsert([{ id: 1, ...formData }]);
+        .upsert(payload);
 
+      // 2. Si falla por nombre de tabla, intentar en mayúsculas 'Configuracion'
       if (error) {
         const res = await supabase
           .from('Configuracion')
-          .upsert([{ id: 1, ...formData }]);
+          .upsert(payload);
         error = res.error;
       }
 
       if (error) throw error;
 
-      // 2. Actualizar el estado global de React
+      // 3. Actualizar el estado global de React
       await onSaveConfig(formData);
-      setConfigSuccess(true);
-      setTimeout(() => setConfigSuccess(false), 3000);
+      setConfigMsg({ type: 'success', text: '¡Configuración e información de la tienda guardada con éxito!' });
+      setTimeout(() => setConfigMsg(null), 4000);
     } catch (err: any) {
       console.error('Error al guardar configuración:', err);
-      alert(`Error al guardar configuración: ${err?.message || 'Revisá la conexión'}`);
+      setConfigMsg({ 
+        type: 'error', 
+        text: `Error al guardar: ${err?.message || 'Revisá la tabla configuracion en Supabase.'}` 
+      });
     } finally {
       setSavingConfig(false);
     }
   };
 
-  // --- NUEVA LÓGICA DE CREACIÓN DE PRODUCTO ---
+  // --- CREACIÓN DE PRODUCTO ---
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.nombre || !newProduct.precio) {
@@ -166,7 +167,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // --- NUEVA LÓGICA DE ACTUALIZACIÓN DE PRODUCTO ---
+  // --- ACTUALIZACIÓN DE PRODUCTO ---
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
@@ -207,7 +208,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // --- NUEVA LÓGICA DE ELIMINACIÓN ---
+  // --- ELIMINACIÓN DE PRODUCTO ---
   const handleDeleteProduct = async (productId: string | number) => {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;
 
@@ -259,7 +260,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
           </button>
         </div>
 
-        {/* PIN Login view if not authenticated */}
+        {/* PIN Login view */}
         {!isAuthenticated ? (
           <div className="p-8 sm:p-12 text-center max-w-md mx-auto space-y-6">
             <div className="w-16 h-16 bg-[#004080]/10 rounded-full flex items-center justify-center mx-auto text-[#004080]">
@@ -268,7 +269,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
             <div>
               <h3 className="text-xl font-bold text-slate-900 font-serif">Acceso Administrador</h3>
               <p className="text-xs text-slate-500 mt-1">
-                Ingresá la clave de administración. (Clave por defecto: <strong className="text-slate-800">admin</strong> o haz clic en Acceder)
+                Ingresá la clave de administración. (Clave por defecto: <strong className="text-slate-800">admin</strong>)
               </p>
             </div>
 
@@ -372,6 +373,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     <span>Información de la Tienda, Contacto y Promociones</span>
                   </h3>
 
+                  {configMsg && (
+                    <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                      configMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    }`}>
+                      {configMsg.type === 'success' ? <Check className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-rose-600" />}
+                      <span>{configMsg.text}</span>
+                    </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                     <div>
                       <label className="block font-medium text-slate-700 mb-1">Nombre de la Tienda</label>
@@ -453,7 +463,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     </div>
                   </div>
 
-                  {/* Promos & Discounts Config with Toggles */}
+                  {/* Promos & Discounts Config */}
                   <div className="pt-4 border-t space-y-4 text-xs">
                     <h4 className="font-bold text-slate-800 text-sm flex items-center justify-between">
                       <span>Promociones, Descuentos y Beneficios</span>
@@ -461,7 +471,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     </h4>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      
                       {/* Cuotas sin Interes */}
                       <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
                         <div className="flex items-center justify-between">
@@ -547,7 +556,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </div>
                         {formData.mostrar_envio_gratis !== false && (
                           <div>
-                            <label className="block text-[11px] font-medium text-slate-600 mb-1">Mínimo en Compra ($) (monto_envio_gratis)</label>
+                            <label className="block text-[11px] font-medium text-slate-600 mb-1">Mínimo en Compra ($)</label>
                             <input
                               type="number"
                               value={formData.monto_envio_gratis ?? formData.envio_gratis_minimo ?? 60000}
@@ -557,7 +566,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           </div>
                         )}
                       </div>
-
                     </div>
                   </div>
 
@@ -605,17 +613,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                   </div>
 
                   {/* Submit Button */}
-                  <div className="pt-4 flex items-center justify-between border-t">
-                    {configSuccess && (
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        <Check className="w-4 h-4" />
-                        ¡Configuración guardada exitosamente!
-                      </span>
-                    )}
+                  <div className="pt-4 flex items-center justify-end border-t">
                     <button
                       type="submit"
                       disabled={savingConfig}
-                      className="ml-auto bg-[#004080] hover:bg-[#002a58] text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                      className="bg-[#004080] hover:bg-[#002a58] text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
                     >
                       {savingConfig ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       <span>Guardar Todos los Cambios</span>
@@ -634,6 +636,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                     </span>
                     <span className="text-xs font-normal text-slate-500">Formulario y Modales Emergentes</span>
                   </h3>
+
+                  {configMsg && (
+                    <div className={`p-3.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                      configMsg.type === 'success' ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+                    }`}>
+                      {configMsg.type === 'success' ? <Check className="w-4 h-4 text-emerald-600" /> : <AlertCircle className="w-4 h-4 text-rose-600" />}
+                      <span>{configMsg.text}</span>
+                    </div>
+                  )}
 
                   <div className="space-y-6">
 
@@ -765,17 +776,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
                   </div>
 
-                  <div className="pt-4 flex items-center justify-between border-t">
-                    {configSuccess && (
-                      <span className="text-xs font-bold text-emerald-600 flex items-center gap-1">
-                        <Check className="w-4 h-4" />
-                        ¡Políticas de la tienda actualizadas!
-                      </span>
-                    )}
+                  <div className="pt-4 flex items-center justify-end border-t">
                     <button
                       type="submit"
                       disabled={savingConfig}
-                      className="ml-auto bg-[#004080] hover:bg-[#002a58] text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
+                      className="bg-[#004080] hover:bg-[#002a58] text-white font-bold px-6 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-sm transition-all cursor-pointer"
                     >
                       {savingConfig ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                       <span>Guardar Políticas y Textos</span>
