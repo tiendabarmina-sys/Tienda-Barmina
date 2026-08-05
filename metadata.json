@@ -1,0 +1,6 @@
+{
+  "name": "Barmina",
+  "description": "Tienda oficial e-commerce Barmina conectada a Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
