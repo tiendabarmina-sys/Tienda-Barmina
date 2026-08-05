@@ -78,13 +78,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
+  // --- NUEVA LÓGICA DE GUARDADO DE CONFIGURACIÓN ---
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
     setConfigSuccess(false);
 
     try {
-      // 1. Persistir la configuración en Supabase
+      // 1. Guardar primero en Supabase
       let { error } = await supabase
         .from('configuracion')
         .upsert([{ id: 1, ...formData }]);
@@ -98,18 +99,19 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
       if (error) throw error;
 
-      // 2. Actualizar el estado global en la app React
+      // 2. Actualizar el estado global de React
       await onSaveConfig(formData);
       setConfigSuccess(true);
       setTimeout(() => setConfigSuccess(false), 3000);
     } catch (err: any) {
       console.error('Error al guardar configuración:', err);
-      alert(`Error al guardar configuración: ${err?.message || 'Revisá la conexión con Supabase'}`);
+      alert(`Error al guardar configuración: ${err?.message || 'Revisá la conexión'}`);
     } finally {
       setSavingConfig(false);
     }
   };
 
+  // --- NUEVA LÓGICA DE CREACIÓN DE PRODUCTO ---
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.nombre || !newProduct.precio) {
@@ -164,6 +166,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
+  // --- NUEVA LÓGICA DE ACTUALIZACIÓN DE PRODUCTO ---
   const handleUpdateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
@@ -204,6 +207,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
+  // --- NUEVA LÓGICA DE ELIMINACIÓN ---
   const handleDeleteProduct = async (productId: string | number) => {
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;
 
