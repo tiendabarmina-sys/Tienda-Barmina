@@ -81,12 +81,30 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
+    setConfigSuccess(false);
+
     try {
+      // 1. Persistir la configuración en Supabase
+      let { error } = await supabase
+        .from('configuracion')
+        .upsert([{ id: 1, ...formData }]);
+
+      if (error) {
+        const res = await supabase
+          .from('Configuracion')
+          .upsert([{ id: 1, ...formData }]);
+        error = res.error;
+      }
+
+      if (error) throw error;
+
+      // 2. Actualizar el estado global en la app React
       await onSaveConfig(formData);
       setConfigSuccess(true);
       setTimeout(() => setConfigSuccess(false), 3000);
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Error al guardar configuración:', err);
+      alert(`Error al guardar configuración: ${err?.message || 'Revisá la conexión con Supabase'}`);
     } finally {
       setSavingConfig(false);
     }
@@ -116,12 +134,14 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         envio_gratis: newProduct.envio_gratis ?? true
       };
 
-      const { error } = await supabase.from('Productos').insert([payload]);
+      let { error } = await supabase.from('productos').insert([payload]);
 
       if (error) {
-        const { error: err2 } = await supabase.from('productos').insert([payload]);
-        if (err2) throw err2;
+        const res = await supabase.from('Productos').insert([payload]);
+        error = res.error;
       }
+
+      if (error) throw error;
 
       setProductMsg({ type: 'success', text: '¡Producto guardado exitosamente!' });
       setShowAddProduct(false);
@@ -137,6 +157,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       });
       onRefreshProducts();
     } catch (err: any) {
+      console.error(err);
       setProductMsg({ type: 'error', text: `Error al guardar: ${err?.message || 'Revisá la conexión'}` });
     } finally {
       setSavingProduct(false);
@@ -163,15 +184,20 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         envio_gratis: editingProduct.envio_gratis ?? false
       };
 
-      const { error } = await supabase.from('Productos').update(payload).eq('id', editingProduct.id);
+      let { error } = await supabase.from('productos').update(payload).eq('id', editingProduct.id);
+
       if (error) {
-        await supabase.from('productos').update(payload).eq('id', editingProduct.id);
+        const res = await supabase.from('Productos').update(payload).eq('id', editingProduct.id);
+        error = res.error;
       }
+
+      if (error) throw error;
 
       setProductMsg({ type: 'success', text: '¡Producto actualizado con éxito!' });
       setEditingProduct(null);
       onRefreshProducts();
     } catch (err: any) {
+      console.error(err);
       setProductMsg({ type: 'error', text: `Error al actualizar: ${err?.message || 'Revisá la conexión'}` });
     } finally {
       setSavingProduct(false);
@@ -182,8 +208,10 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;
 
     try {
-      await supabase.from('Productos').delete().eq('id', productId);
-      await supabase.from('productos').delete().eq('id', productId);
+      let { error } = await supabase.from('productos').delete().eq('id', productId);
+      if (error) {
+        await supabase.from('Productos').delete().eq('id', productId);
+      }
       onRefreshProducts();
     } catch (err) {
       console.error(err);
@@ -833,7 +861,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="block font-medium text-slate-700 mb-1">Precio Anterior ($ - Tachatdo)</label>
+                          <label className="block font-medium text-slate-700 mb-1">Precio Anterior ($ - Tachado)</label>
                           <input
                             type="number"
                             placeholder="Opcional"
@@ -970,7 +998,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </div>
 
                         <div>
-                          <label className="block font-medium text-slate-700 mb-1">Precio Anterior ($ - Tachatdo/Oferta)</label>
+                          <label className="block font-medium text-slate-700 mb-1">Precio Anterior ($ - Tachado/Oferta)</label>
                           <input
                             type="number"
                             placeholder="Ej: 15000 (Opcional)"
