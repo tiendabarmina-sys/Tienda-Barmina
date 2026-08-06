@@ -1,63 +1,70 @@
 import React from 'react';
 import { StoreConfig } from '../types';
+import { Sparkles, ArrowRight, ShieldCheck, Leaf } from 'lucide-react';
 
-interface HeroSectionProps {
-  storeConfig: StoreConfig;
-  onExploreClick: () => void;
+interface HeroProps {
+  config: StoreConfig;
 }
 
-export const HeroSection: React.FC<HeroSectionProps> = ({ storeConfig, onExploreClick }) => {
+export const Hero: React.FC<HeroProps> = ({ config }) => {
+  const bannerUrl = config.banner_url || 'https://images.unsplash.com/photo-1602928321679-560bb453f190?auto=format&fit=crop&w=1600&q=80';
+  const titulo = config.nombre_tienda || 'Fragancias y elementos sagrados para tus ritos diarios';
+  const textoBienvenida = config.texto_bienvenida || config.descripcion_tienda || 'Diseñados con ingredientes naturales, resinas puras y aceites botánicos para elevar la vibración de tu hogar.';
+
   return (
-    <section className="relative min-h-[580px] lg:min-h-[640px] flex items-center justify-center overflow-hidden rounded-3xl my-4 mx-4 sm:mx-6 lg:mx-8 shadow-md">
-      {/* Background Image */}
-      <img
-        src={storeConfig.heroImageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuB0mDD-NbofRnh0NeKz-dI8s_3Jc84USuXwX8Ps1a9coaTvLfrLxhO9wmfocY7g1j2w5NCfUStRcVfP5O6b5s3romAAOgWIbPJNVQ-OdrNwNBR5SrvowCx_E98ooHjWIzR2GENSlgaQIWw61ywDGjjLh7T-oxZojROLidQKf75X_RcD3bcV8Q9Jw0Tkw8RJQNxxh4RrYanuCTVjdfUPH1UiHhm-ico7-yqP_L3DhlQefcVQHV051lLNCF7qZIzVaMmCBJsCqI5k2-M"}
-        alt={storeConfig.storeName}
-        className="absolute inset-0 w-full h-full object-cover object-center scale-105 transition-transform duration-1000"
+    <div className="relative text-white overflow-hidden my-4 rounded-[2.5rem] mx-4 sm:mx-8 shadow-2xl bg-slate-900 min-h-[500px] sm:min-h-[580px] flex items-center">
+      {/* Imagen de fondo con opacidad y efecto inmersivo */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-50 scale-105 transition-transform duration-1000"
+        style={{ backgroundImage: `url(${bannerUrl})` }}
       />
+      
+      {/* Degradado lateral oscuro profesional (igual al de tu referencia) */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#0d1b2a] via-[#0d1b2a]/80 to-transparent" />
 
-      {/* Dark editorial gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#162839]/85 via-[#162839]/60 to-transparent" />
+      {/* Contenido principal alineado a la izquierda */}
+      <div className="relative max-w-4xl mx-auto py-16 px-6 sm:py-24 sm:px-12 w-full space-y-6">
+        
+        {/* Badge superior sutil */}
+        <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full text-xs text-slate-200 font-medium tracking-wide border border-white/10">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+          <span>NOVEDADES HOLÍSTICAS 2026</span>
+        </div>
 
-      {/* Content */}
-      <div className="relative max-w-7xl w-full mx-auto px-6 sm:px-12 py-16 text-white z-10">
-        <div className="max-w-2xl space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs tracking-wider uppercase font-medium text-[#F9F7F2]">
-            <span className="w-2 h-2 rounded-full bg-[#B85C38] animate-pulse" />
-            {storeConfig.heroBadge}
-          </div>
+        {/* Título principal grande y elegante */}
+        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-serif font-bold tracking-tight text-white max-w-2xl leading-tight">
+          {titulo}
+        </h1>
 
-          <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.15] text-[#F9F7F2] tracking-tight">
-            {storeConfig.heroTitle}
-          </h1>
+        {/* Descripción descriptiva */}
+        <p className="text-xs sm:text-sm text-slate-300 max-w-xl leading-relaxed font-light">
+          {textoBienvenida}
+        </p>
 
-          <p className="text-base sm:text-lg text-white/80 font-normal leading-relaxed max-w-xl">
-            {storeConfig.heroSubtitle}
-          </p>
+        {/* Botón de acción principal en tono terracota/cobrizo características de Barmina */}
+        <div className="pt-2 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+          <a
+            href="#productos"
+            className="bg-[#c26842] hover:bg-[#a85734] text-white font-medium text-xs sm:text-sm py-3.5 px-7 rounded-full transition-all shadow-lg flex items-center gap-2 cursor-pointer group"
+          >
+            <span>Explorar Catálogo</span>
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          </a>
 
-          <div className="pt-4 flex flex-wrap items-center gap-4">
-            <button
-              onClick={onExploreClick}
-              className="px-8 py-4 bg-[#B85C38] hover:bg-[#a04e2d] text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
-              id="hero-explore-cta"
-            >
-              <span>{storeConfig.heroButtonText}</span>
-              <span className="material-symbols-outlined text-lg">east</span>
-            </button>
-
-            <div className="flex items-center gap-6 pl-2 text-xs text-white/70">
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[#6E8371] text-sm">verified</span>
-                <span>100% Natural</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[#6E8371] text-sm">potted_plant</span>
-                <span>Sustentable</span>
-              </div>
+          {/* Iconos de confianza inferiores */}
+          <div className="flex items-center gap-4 text-[11px] text-slate-300 font-medium">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>100% Natural</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Leaf className="w-4 h-4 text-emerald-400" />
+              <span>Sustentable</span>
             </div>
           </div>
         </div>
+
       </div>
-    </section>
+    </div>
   );
 };
