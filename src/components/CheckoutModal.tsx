@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, ShieldCheck, Truck, CreditCard, Building, ArrowRight, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
 import { CartItem, CustomerOrder } from '../types';
 import { createOrderInSupabase } from '../lib/supabase';
 
@@ -28,8 +28,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     dni: '',
     direccion: '',
     ciudad: 'Buenos Aires',
-    codigo_postal: '1425',
-    metodo_envio: 'domicilio',
+    codigo_postal: '',
+    metodo_envio: 'coordinar', // Opciones: 'coordinar' o 'retiro'
     metodo_pago: 'transferencia'
   });
 
@@ -40,8 +40,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     return acc + itemPrice * item.quantity;
   }, 0);
 
-  const isFreeShipping = subtotal >= 60000 || formData.metodo_envio === 'retiro';
-  const shippingCost = isFreeShipping ? 0 : 4500;
+  const shippingCost = 0; // Envío libre / sin costo fijo automático
   
   // 15% OFF for Bank Transfer
   const isTransfer = formData.metodo_pago === 'transferencia';
@@ -62,11 +61,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       email: formData.email || 'cliente@barmina.com',
       telefono: formData.telefono || '+54 11 5555 0000',
       dni: formData.dni || '38123456',
-      direccion: formData.direccion || 'Av. Corrientes 1234',
+      direccion: formData.direccion || 'A coordinar',
       ciudad: formData.ciudad || 'Buenos Aires',
-      codigo_postal: formData.codigo_postal || '1425',
-      metodo_pago: formData.metodo_pago === 'transferencia' ? 'Transferencia Bancaria (15% OFF)' : formData.metodo_pago === 'cuotas' ? 'Tarjeta en 6 Cuotas Sin Interés' : 'Mercado Pago',
-      metodo_envio: formData.metodo_envio === 'domicilio' ? 'Envío a Domicilio' : 'Retiro en Sucursal Recoleta',
+      codigo_postal: formData.codigo_postal || '',
+      metodo_pago: formData.metodo_pago === 'transferencia' ? 'Transferencia Bancaria (15% OFF)' : formData.metodo_pago === 'cuotas' ? 'Tarjeta en Cuotas Sin Interés' : 'Mercado Pago',
+      metodo_envio: formData.metodo_envio === 'coordinar' ? 'Coordinar envío con el vendedor' : 'Retiro en domicilio del vendedor',
       subtotal,
       descuento: discountAmount,
       envio: shippingCost,
@@ -99,7 +98,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100"
+            className="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -194,12 +193,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
           {/* STEP 2: ENVÍO */}
           {step === 2 && (
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">2. Opciones de Envío</h3>
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider">2. Opciones de Envío o Retiro</h3>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label 
                   className={`p-4 rounded-2xl border cursor-pointer transition-all flex items-start gap-3 ${
-                    formData.metodo_envio === 'domicilio'
+                    formData.metodo_envio === 'coordinar'
                       ? 'border-[#004080] bg-[#004080]/5'
                       : 'border-slate-200 bg-[#f5f1e9]'
                   }`}
@@ -207,15 +206,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <input
                     type="radio"
                     name="metodo_envio"
-                    value="domicilio"
-                    checked={formData.metodo_envio === 'domicilio'}
-                    onChange={() => handleInputChange('metodo_envio', 'domicilio')}
+                    value="coordinar"
+                    checked={formData.metodo_envio === 'coordinar'}
+                    onChange={() => handleInputChange('metodo_envio', 'coordinar')}
                     className="mt-1"
                   />
                   <div>
-                    <span className="font-bold text-xs text-[#004080] block">Envío a Domicilio</span>
+                    <span className="font-bold text-xs text-[#004080] block">Coordinar con el Vendedor</span>
                     <span className="text-[11px] text-slate-600 block mt-0.5">
-                      {subtotal >= 60000 ? 'GRATIS (Superaste $60.000)' : '$4.500 ARS - Llega en 48hs'}
+                      Acordamos el envío o entrega por WhatsApp o mensaje.
                     </span>
                   </div>
                 </label>
@@ -236,37 +235,24 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                     className="mt-1"
                   />
                   <div>
-                    <span className="font-bold text-xs text-[#004080] block">Retiro en Sucursal Barmina</span>
+                    <span className="font-bold text-xs text-[#004080] block">Retiro en Domicilio del Vendedor</span>
                     <span className="text-[11px] text-slate-600 block mt-0.5">
-                      GRATIS - Av. Alvear 1850, Recoleta
+                      Retirás personalmente de forma gratuita.
                     </span>
                   </div>
                 </label>
               </div>
 
-              {formData.metodo_envio === 'domicilio' && (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="sm:col-span-2">
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Calle y Altura *</label>
-                    <input
-                      type="text"
-                      required
-                      placeholder="Ej. Av. Alvear 1850 4° B"
-                      value={formData.direccion}
-                      onChange={(e) => handleInputChange('direccion', e.target.value)}
-                      className="w-full bg-[#f5f1e9] text-xs p-2.5 rounded-xl border border-[#d1cdc7]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-semibold text-slate-700 block mb-1">Código Postal</label>
-                    <input
-                      type="text"
-                      placeholder="C1425"
-                      value={formData.codigo_postal}
-                      onChange={(e) => handleInputChange('codigo_postal', e.target.value)}
-                      className="w-full bg-[#f5f1e9] text-xs p-2.5 rounded-xl border border-[#d1cdc7]"
-                    />
-                  </div>
+              {formData.metodo_envio === 'coordinar' && (
+                <div className="pt-2">
+                  <label className="text-xs font-semibold text-slate-700 block mb-1">Dirección o zona de entrega (Opcional)</label>
+                  <input
+                    type="text"
+                    placeholder="Ej. Barrio, Ciudad o calle de referencia"
+                    value={formData.direccion}
+                    onChange={(e) => handleInputChange('direccion', e.target.value)}
+                    className="w-full bg-[#f5f1e9] text-xs p-2.5 rounded-xl border border-[#d1cdc7]"
+                  />
                 </div>
               )}
 
@@ -338,12 +324,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       onChange={() => handleInputChange('metodo_pago', 'cuotas')}
                     />
                     <div>
-                      <span className="font-bold text-xs text-[#004080] block">Tarjeta de Crédito en 3 ó 6 Cuotas Sin Interés</span>
-                      <span className="text-[11px] text-slate-600">Visa, Mastercard, Amex de todos los bancos</span>
+                      <span className="font-bold text-xs text-[#004080] block">Tarjeta de Crédito</span>
+                      <span className="text-[11px] text-slate-600">Visa, Mastercard, Amex</span>
                     </div>
                   </div>
                   <span className="text-xs font-bold text-[#004080]">
-                    6x ${Math.round((subtotal + shippingCost) / 6).toLocaleString('es-AR')}
+                    6x ${Math.round(total / 6).toLocaleString('es-AR')}
                   </span>
                 </label>
 
@@ -383,8 +369,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>Costo de Envío:</span>
-                  <span>{shippingCost === 0 ? 'GRATIS' : `$${shippingCost.toLocaleString('es-AR')}`}</span>
+                  <span>Envío:</span>
+                  <span className="text-emerald-700 font-semibold">A coordinar</span>
                 </div>
                 <div className="flex justify-between text-base font-extrabold text-[#004080] pt-2 border-t border-[#d1cdc7]">
                   <span>Total Final:</span>
