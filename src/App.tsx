@@ -4,6 +4,7 @@ import { fetchProducts, fetchStoreConfig, saveStoreConfigToSupabase, supabase } 
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
+import { AboutSection } from './components/AboutSection';
 import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
@@ -16,7 +17,6 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { HelpModal } from './components/HelpModal';
 import { Footer } from './components/Footer';
 import { ShoppingBag, Database } from 'lucide-react';
-import { AboutSection } from './components/AboutSection';
 
 export default function App() {
   // Data States
@@ -247,6 +247,9 @@ export default function App() {
             if (el) el.scrollIntoView({ behavior: 'smooth' });
           }}
         />
+
+        {/* Sección Institucional Estética */}
+        <AboutSection />
 
         {/* Catalog Container */}
         <section id="catalog-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
