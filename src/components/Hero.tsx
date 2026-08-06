@@ -1,55 +1,63 @@
 import React from 'react';
 import { StoreConfig } from '../types';
-import { Sparkles, Leaf } from 'lucide-react';
 
-interface HeroProps {
-  config: StoreConfig;
+interface HeroSectionProps {
+  storeConfig: StoreConfig;
+  onExploreClick: () => void;
 }
 
-export const Hero: React.FC<HeroProps> = ({ config }) => {
-  const bannerUrl = config.banner_url || 'https://images.unsplash.com/photo-1602928321679-560bb453f190?auto=format&fit=crop&w=1400&q=80';
-  const titulo = config.nombre_tienda || 'Barmina Aromas';
-  const textoBienvenida = config.texto_bienvenida || config.descripcion_tienda || 'Encontrá tu equilibrio con nuestras fragancias artesanales, sahumerios y difusores holísticos.';
-
+export const HeroSection: React.FC<HeroSectionProps> = ({ storeConfig, onExploreClick }) => {
   return (
-    <div className="relative bg-white text-slate-800 overflow-hidden my-4 rounded-3xl mx-4 sm:mx-8 shadow-sm border border-[#e6e2da]">
-      {/* Contenedor en dos columnas para que se vea moderno (Texto a la izq, Imagen armónica a la der) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 items-center">
-        
-        {/* Columna de Texto */}
-        <div className="lg:col-span-7 py-10 px-6 sm:py-14 sm:px-10 space-y-4 text-center lg:text-left">
-          
-          <div className="inline-flex items-center gap-2 bg-[#f5f1e9] text-[#004080] px-3.5 py-1 rounded-full text-xs font-semibold tracking-wide border border-[#e6e2da] mx-auto lg:mx-0">
-            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            <span>Tienda Holística & Aromaterapia</span>
+    <section className="relative min-h-[580px] lg:min-h-[640px] flex items-center justify-center overflow-hidden rounded-3xl my-4 mx-4 sm:mx-6 lg:mx-8 shadow-md">
+      {/* Background Image */}
+      <img
+        src={storeConfig.heroImageUrl || "https://lh3.googleusercontent.com/aida-public/AB6AXuB0mDD-NbofRnh0NeKz-dI8s_3Jc84USuXwX8Ps1a9coaTvLfrLxhO9wmfocY7g1j2w5NCfUStRcVfP5O6b5s3romAAOgWIbPJNVQ-OdrNwNBR5SrvowCx_E98ooHjWIzR2GENSlgaQIWw61ywDGjjLh7T-oxZojROLidQKf75X_RcD3bcV8Q9Jw0Tkw8RJQNxxh4RrYanuCTVjdfUPH1UiHhm-ico7-yqP_L3DhlQefcVQHV051lLNCF7qZIzVaMmCBJsCqI5k2-M"}
+        alt={storeConfig.storeName}
+        className="absolute inset-0 w-full h-full object-cover object-center scale-105 transition-transform duration-1000"
+      />
+
+      {/* Dark editorial gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#162839]/85 via-[#162839]/60 to-transparent" />
+
+      {/* Content */}
+      <div className="relative max-w-7xl w-full mx-auto px-6 sm:px-12 py-16 text-white z-10">
+        <div className="max-w-2xl space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs tracking-wider uppercase font-medium text-[#F9F7F2]">
+            <span className="w-2 h-2 rounded-full bg-[#B85C38] animate-pulse" />
+            {storeConfig.heroBadge}
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-serif font-bold tracking-tight text-[#004080]">
-            {titulo}
+          <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-normal leading-[1.15] text-[#F9F7F2] tracking-tight">
+            {storeConfig.heroTitle}
           </h1>
 
-          <p className="text-xs sm:text-sm text-slate-600 max-w-xl leading-relaxed font-light">
-            {textoBienvenida}
+          <p className="text-base sm:text-lg text-white/80 font-normal leading-relaxed max-w-xl">
+            {storeConfig.heroSubtitle}
           </p>
 
-          <div className="pt-2 flex items-center justify-center lg:justify-start gap-2 text-xs text-slate-500 font-serif italic">
-            <Leaf className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Hecho con amor y armonía para tus espacios</span>
+          <div className="pt-4 flex flex-wrap items-center gap-4">
+            <button
+              onClick={onExploreClick}
+              className="px-8 py-4 bg-[#B85C38] hover:bg-[#a04e2d] text-white text-sm font-semibold rounded-full shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex items-center gap-2 cursor-pointer"
+              id="hero-explore-cta"
+            >
+              <span>{storeConfig.heroButtonText}</span>
+              <span className="material-symbols-outlined text-lg">east</span>
+            </button>
+
+            <div className="flex items-center gap-6 pl-2 text-xs text-white/70">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[#6E8371] text-sm">verified</span>
+                <span>100% Natural</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[#6E8371] text-sm">potted_plant</span>
+                <span>Sustentable</span>
+              </div>
+            </div>
           </div>
-
         </div>
-
-        {/* Columna de Imagen Estética */}
-        <div className="lg:col-span-5 h-56 sm:h-72 lg:h-full relative overflow-hidden bg-[#f5f1e9]">
-          <div 
-            className="absolute inset-0 bg-cover bg-center hover:scale-105 transition-transform duration-700"
-            style={{ backgroundImage: `url(${bannerUrl})` }}
-          />
-          {/* Sutil degradado interno para fundir la imagen con la tarjeta */}
-          <div className="absolute inset-0 bg-gradient-to-t lg:bg-gradient-to-r from-white via-transparent to-transparent opacity-90 lg:opacity-100" />
-        </div>
-
       </div>
-    </div>
+    </section>
   );
 };
