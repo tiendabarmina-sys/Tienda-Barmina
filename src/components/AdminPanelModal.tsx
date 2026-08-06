@@ -33,10 +33,15 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   const [activeTab, setActiveTab] = useState<'config' | 'policies' | 'products' | 'categories' | 'orders' | 'debug'>('config');
 
-  // Config state
+  // Config state con sincronización garantizada al abrir
   const [formData, setFormData] = useState<StoreConfig>({ ...config });
-  const [savingConfig, setSavingConfig] = useState(false);
-  const [configMsg, setConfigMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Actualizar el formulario si las props de configuración cambian o se recargan
+  React.useEffect(() => {
+    if (config) {
+      setFormData({ ...config });
+    }
+  }, [config, isOpen]);
 
   // Editing existing product state
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
