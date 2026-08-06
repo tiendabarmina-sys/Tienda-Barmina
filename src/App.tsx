@@ -16,6 +16,7 @@ import { AdminPanelModal } from './components/AdminPanelModal';
 import { HelpModal } from './components/HelpModal';
 import { Footer } from './components/Footer';
 import { ShoppingBag, Database } from 'lucide-react';
+import { AboutSection } from './components/AboutSection';
 
 export default function App() {
   // Data States
