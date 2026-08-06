@@ -130,3 +130,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
     </div>
   );
 };
+
+// Exportación por defecto adicional para evitar pantallas en blanco si App.tsx lo importa sin llaves
+export default CartDrawer;
