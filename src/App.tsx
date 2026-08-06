@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Product, CartItem, StoreConfig, FilterState } from './types';
-import { fetchProducts, fetchStoreConfig, saveStoreConfigToSupabase, supabase } from './lib/supabase';
+import { fetchProducts, fetchStoreConfig, saveStoreConfigToSupabase } from './lib/supabase';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
+import { CategoryGrid } from './components/CategoryGrid';
 import { AboutSection } from './components/AboutSection';
 import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
@@ -19,17 +20,14 @@ import { Footer } from './components/Footer';
 import { ShoppingBag, Database } from 'lucide-react';
 
 export default function App() {
-  // Data States
   const [products, setProducts] = useState<Product[]>([]);
   const [config, setConfig] = useState<StoreConfig>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [supabaseSource, setSupabaseSource] = useState<'supabase' | 'fallback'>('supabase');
 
-  // Shopping Cart & Favorites
   const [cart, setCart] = useState<CartItem[]>([]);
   const [favorites, setFavorites] = useState<Product[]>([]);
 
-  // Modals & Panels
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const [isCartOpen, setIsCartOpen] = useState<boolean>(false);
   const [isWishlistOpen, setIsWishlistOpen] = useState<boolean>(false);
@@ -38,7 +36,6 @@ export default function App() {
   const [helpModalType, setHelpModalType] = useState<'faq' | 'pago' | 'envio' | 'cambios' | 'contacto' | null>(null);
   const [orderSuccessId, setOrderSuccessId] = useState<string | null>(null);
 
-  // Filters & Pagination State
   const [filters, setFilters] = useState<FilterState>({
     category: 'Todos',
     search: '',
@@ -51,12 +48,10 @@ export default function App() {
   });
   const [visibleCount, setVisibleCount] = useState<number>(16);
 
-  // Reset pagination when filter or search changes
   useEffect(() => {
     setVisibleCount(16);
   }, [filters]);
 
-  // Load products & config on mount
   const loadInitialData = async () => {
     setLoading(true);
     const [configRes, productsRes] = await Promise.all([
@@ -67,7 +62,6 @@ export default function App() {
     setConfig(configRes.config);
     setProducts(productsRes.products);
     
-    // Determine connection state
     if (configRes.source === 'supabase' || productsRes.source === 'supabase') {
       setSupabaseSource('supabase');
     } else {
@@ -80,7 +74,6 @@ export default function App() {
   useEffect(() => {
     loadInitialData();
 
-    // Secret Admin keyboard shortcut: Ctrl+Shift+A or Alt+A or URL #admin
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'a') || (e.altKey && e.key.toLowerCase() === 'a')) {
         e.preventDefault();
@@ -105,7 +98,6 @@ export default function App() {
     }
   };
 
-  // Filter & Search calculation
   const categoriesList = useMemo(() => {
     const cats = new Set<string>();
     cats.add('Todos');
@@ -117,7 +109,6 @@ export default function App() {
 
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
-      // Category Filter
       if (filters.category !== 'Todos') {
         if (filters.category === 'Ofertas') {
           const originalPrice = p.precio_anterior || p.original_price;
@@ -128,7 +119,6 @@ export default function App() {
         }
       }
 
-      // Search Query
       if (filters.search.trim()) {
         const query = filters.search.toLowerCase();
         const nameMatch = (p.nombre || p.title || '').toLowerCase().includes(query);
@@ -137,7 +127,6 @@ export default function App() {
         if (!nameMatch && !descMatch && !catMatch) return false;
       }
 
-      // Toggles
       if (filters.onlyFreeShipping && !p.envio_gratis) return false;
       if (filters.onlyInStock && p.stock !== undefined && p.stock <= 0) return false;
       if (filters.onlyOnSale) {
@@ -155,11 +144,10 @@ export default function App() {
       if (filters.sortBy === 'price-desc') return priceB - priceA;
       if (filters.sortBy === 'name-asc') return (a.nombre || '').localeCompare(b.nombre || '');
       if (filters.sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
-      return 0; // default featured
+      return 0;
     });
   }, [products, filters]);
 
-  // Cart operations
   const handleAddToCart = (product: Product, quantity = 1, size?: string, color?: string) => {
     const chosenSize = size || (product.talles && product.talles.length > 0 ? product.talles[0] : undefined);
     const chosenColor = color || (product.colores && product.colores.length > 0 ? product.colores[0] : undefined);
@@ -200,7 +188,6 @@ export default function App() {
     setCart((prevCart) => prevCart.filter((item) => item.product.id !== productId));
   };
 
-  // Favorites toggle
   const handleToggleFavorite = (product: Product) => {
     setFavorites((prev) => {
       const exists = prev.some((p) => p.id === product.id);
@@ -218,10 +205,8 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#f5f1e9] text-[#1c1b1b] font-sans">
       
-      {/* Top Ticker Bar */}
       <AnnouncementBar config={config} />
 
-      {/* Main Barmina Header */}
       <Header
         cartCount={cart.reduce((sum, item) => sum + item.quantity, 0)}
         wishlistCount={favorites.length}
@@ -236,10 +221,9 @@ export default function App() {
         onOpenAdmin={() => setIsAdminOpen(true)}
       />
 
-      {/* Main Content Area */}
       <main className="flex-1">
         
-        {/* Full-Width Editorial Hero Banner */}
+        {/* Banner Principal Limpio */}
         <Hero
           config={config}
           onExplore={() => {
@@ -248,13 +232,16 @@ export default function App() {
           }}
         />
 
-        {/* Sección Institucional Estética */}
+        {/* Grilla de Categorías Destacadas */}
+        <CategoryGrid 
+          onSelectCategory={(cat) => setFilters((prev) => ({ ...prev, category: cat }))} 
+        />
+
+        {/* Sección Institucional */}
         <AboutSection />
 
-        {/* Catalog Container */}
+        {/* Catálogo de Productos */}
         <section id="catalog-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          
-          {/* Section Heading */}
           <div className="flex items-center justify-between mb-6 pb-3 border-b border-[#e6e2da]">
             <div>
               <span className="text-xs font-bold uppercase tracking-widest text-[#004080]">Catálogo Barmina</span>
@@ -264,7 +251,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* Interactive Filter Bar with Dropdown Selector */}
           <FilterBar
             filters={filters}
             onChangeFilter={(key, value) => setFilters((prev) => ({ ...prev, [key]: value }))}
@@ -284,7 +270,6 @@ export default function App() {
             }
           />
 
-          {/* Loading State Spinner */}
           {loading ? (
             <div className="bg-white rounded-3xl p-16 text-center border border-[#e6e2da] shadow-sm my-8 space-y-4 max-w-md mx-auto">
               <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
@@ -293,18 +278,14 @@ export default function App() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-base font-bold text-slate-800 font-sans">Cargando catálogo...</h3>
-                <p className="text-xs text-slate-500">
-                  Obteniendo los productos de la tienda.
-                </p>
+                <p className="text-xs text-slate-500">Obteniendo los productos de la tienda.</p>
               </div>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-[#e6e2da] space-y-4 max-w-lg mx-auto barmina-card-shadow">
               <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
               <h3 className="text-lg font-bold text-slate-800 font-serif">No se encontraron productos</h3>
-              <p className="text-xs text-slate-500">
-                Probá cambiando los términos de búsqueda o seleccionando otra categoría.
-              </p>
+              <p className="text-xs text-slate-500">Probá cambiando los términos de búsqueda o seleccionando otra categoría.</p>
               <button
                 onClick={() =>
                   setFilters({
@@ -343,7 +324,6 @@ export default function App() {
                 ))}
               </div>
 
-              {/* Continuar Viendo Pagination Button */}
               {visibleCount < filteredProducts.length && (
                 <div className="pt-4 text-center">
                   <button
@@ -356,21 +336,16 @@ export default function App() {
               )}
             </div>
           )}
-
         </section>
 
       </main>
 
-      {/* Floating WhatsApp Action Button */}
       <WhatsAppButton phoneNumber={config.whatsapp_numero || '5491164504653'} />
 
-      {/* Modals & Slide-over Drawers */}
       <ProductDetailModal
         product={quickViewProduct}
         onClose={() => setQuickViewProduct(null)}
-        onAddToCart={(prod, qty, size, col) => {
-          handleAddToCart(prod, qty, size, col);
-        }}
+        onAddToCart={(prod, qty, size, col) => handleAddToCart(prod, qty, size, col)}
         onDirectCheckout={(prod, qty, size, col) => {
           handleAddToCart(prod, qty, size, col);
           setQuickViewProduct(null);
@@ -431,7 +406,6 @@ export default function App() {
         config={config}
       />
 
-      {/* Footer */}
       <Footer
         config={config}
         onSelectCategory={(cat) => setFilters((prev) => ({ ...prev, category: cat }))}
