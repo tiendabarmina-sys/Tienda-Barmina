@@ -186,7 +186,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             {/* Totals Summary */}
             <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-[#f0eded]">
               <div className="flex justify-between">
-                <span>Subtotal:</span>
+                <span>Total parcial:</span>
                 <span className="font-semibold text-slate-800">${subtotal.toLocaleString('es-AR')}</span>
               </div>
               {discountAmount > 0 && (
@@ -203,9 +203,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 <span>Total estimado:</span>
                 <span>${total.toLocaleString('es-AR')}</span>
               </div>
-              <p className="text-[10px] text-emerald-800 font-medium text-right">
-                O hasta 6 cuotas sin interés de ${Math.round(total / 6).toLocaleString('es-AR')}
-              </p>
             </div>
 
             <button
