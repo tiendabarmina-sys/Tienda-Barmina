@@ -33,13 +33,25 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   const [activeTab, setActiveTab] = useState<'config' | 'policies' | 'products' | 'categories' | 'orders' | 'debug'>('config');
 
-  // Config state con sincronización garantizada al abrir
+  // Config state con valores booleanos estrictos para evitar reseteos
   const [formData, setFormData] = useState<StoreConfig>({ ...config });
+  const [savingConfig, setSavingConfig] = useState(false);
+  const [configMsg, setConfigMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  // Actualizar el formulario si las props de configuración cambian o se recargan
+  // Sincronización estricta al abrir el panel o cambiar la config
   React.useEffect(() => {
     if (config) {
-      setFormData({ ...config });
+      setFormData({
+        ...config,
+        mostrar_cuotas: Boolean(config.mostrar_cuotas ?? true),
+        mostrar_descuento_transferencia: Boolean(config.mostrar_descuento_transferencia ?? true),
+        mostrar_envio_gratis: Boolean(config.mostrar_envio_gratis ?? true),
+        mostrar_preguntas_frecuentes: Boolean(config.mostrar_preguntas_frecuentes ?? true),
+        mostrar_medios_pago: Boolean(config.mostrar_medios_pago ?? true),
+        mostrar_seguimiento_envio: Boolean(config.mostrar_seguimiento_envio ?? true),
+        mostrar_garantia: Boolean(config.mostrar_garantia ?? true),
+        mostrar_newsletter: Boolean(config.mostrar_newsletter ?? true),
+      });
     }
   }, [config, isOpen]);
 
@@ -78,25 +90,34 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // --- LÓGICA LIMPIA Y DIRECTA DE GUARDADO DE CONFIGURACIÓN ---
+  // --- LÓGICA DE GUARDADO DE CONFIGURACIÓN ---
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
     setConfigMsg(null);
 
     try {
-      const payload = { id: 1, ...formData };
+      const payload = { 
+        id: 1, 
+        ...formData,
+        mostrar_cuotas: Boolean(formData.mostrar_cuotas),
+        mostrar_descuento_transferencia: Boolean(formData.mostrar_descuento_transferencia),
+        mostrar_envio_gratis: Boolean(formData.mostrar_envio_gratis),
+        mostrar_preguntas_frecuentes: Boolean(formData.mostrar_preguntas_frecuentes),
+        mostrar_medios_pago: Boolean(formData.mostrar_medios_pago),
+        mostrar_seguimiento_envio: Boolean(formData.mostrar_seguimiento_envio),
+        mostrar_garantia: Boolean(formData.mostrar_garantia),
+        mostrar_newsletter: Boolean(formData.mostrar_newsletter),
+      };
 
-      // Apuntando directamente a la tabla 'configuracion'
       const { error } = await supabase
         .from('configuracion')
         .upsert([payload]);
 
       if (error) throw error;
 
-      // Actualizar el estado global de React
-      await onSaveConfig(formData);
-      setConfigMsg({ type: 'success', text: '¡Configuración e información de la tienda guardada con éxito!' });
+      await onSaveConfig(payload);
+      setConfigMsg({ type: 'success', text: '¡Configuración guardada y aplicada con éxito!' });
       setTimeout(() => setConfigMsg(null), 4000);
     } catch (err: any) {
       console.error('Error al guardar configuración:', err);
@@ -129,9 +150,9 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         stock: Number(newProduct.stock || 10),
         imagen_url: newProduct.imagen_url || null,
         descripcion: newProduct.descripcion || '',
-        destacado: newProduct.destacado ?? true,
+        destacado: Boolean(newProduct.destacado),
         nuevo: true,
-        envio_gratis: newProduct.envio_gratis ?? true
+        envio_gratis: Boolean(newProduct.envio_gratis)
       };
 
       const { error } = await supabase.from('productos').insert([payload]);
@@ -176,8 +197,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         stock: Number(editingProduct.stock || 0),
         imagen_url: editingProduct.imagen_url || null,
         descripcion: editingProduct.descripcion || '',
-        destacado: editingProduct.destacado ?? false,
-        envio_gratis: editingProduct.envio_gratis ?? false
+        destacado: Boolean(editingProduct.destacado),
+        envio_gratis: Boolean(editingProduct.envio_gratis)
       };
 
       const { error } = await supabase.from('productos').update(payload).eq('id', editingProduct.id);
@@ -462,16 +483,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           <span className="font-bold text-slate-800">Cuotas Sin Interés</span>
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, mostrar_cuotas: formData.mostrar_cuotas === false ? true : false })}
+                            onClick={() => setFormData({ ...formData, mostrar_cuotas: !formData.mostrar_cuotas })}
                             className={`px-2.5 py-1 rounded-full font-bold flex items-center gap-1 transition-all cursor-pointer text-[10px] ${
-                              formData.mostrar_cuotas !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                              formData.mostrar_cuotas ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                             }`}
                           >
-                            {formData.mostrar_cuotas !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                            <span>{formData.mostrar_cuotas !== false ? 'ACTIVO' : 'INACTIVO'}</span>
+                            {formData.mostrar_cuotas ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                            <span>{formData.mostrar_cuotas ? 'ACTIVO' : 'INACTIVO'}</span>
                           </button>
                         </div>
-                        {formData.mostrar_cuotas !== false && (
+                        {formData.mostrar_cuotas && (
                           <div className="space-y-2">
                             <div>
                               <label className="block text-[11px] font-medium text-slate-600 mb-1">Leyenda (texto_cuotas)</label>
@@ -502,16 +523,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           <span className="font-bold text-slate-800">OFF Transferencia</span>
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, mostrar_descuento_transferencia: formData.mostrar_descuento_transferencia === false ? true : false })}
+                            onClick={() => setFormData({ ...formData, mostrar_descuento_transferencia: !formData.mostrar_descuento_transferencia })}
                             className={`px-2.5 py-1 rounded-full font-bold flex items-center gap-1 transition-all cursor-pointer text-[10px] ${
-                              formData.mostrar_descuento_transferencia !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                              formData.mostrar_descuento_transferencia ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                             }`}
                           >
-                            {formData.mostrar_descuento_transferencia !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                            <span>{formData.mostrar_descuento_transferencia !== false ? 'ACTIVO' : 'INACTIVO'}</span>
+                            {formData.mostrar_descuento_transferencia ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                            <span>{formData.mostrar_descuento_transferencia ? 'ACTIVO' : 'INACTIVO'}</span>
                           </button>
                         </div>
-                        {formData.mostrar_descuento_transferencia !== false && (
+                        {formData.mostrar_descuento_transferencia && (
                           <div>
                             <label className="block text-[11px] font-medium text-slate-600 mb-1">% de Descuento</label>
                             <input
@@ -530,16 +551,16 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                           <span className="font-bold text-slate-800">Envío Gratis</span>
                           <button
                             type="button"
-                            onClick={() => setFormData({ ...formData, mostrar_envio_gratis: formData.mostrar_envio_gratis === false ? true : false })}
+                            onClick={() => setFormData({ ...formData, mostrar_envio_gratis: !formData.mostrar_envio_gratis })}
                             className={`px-2.5 py-1 rounded-full font-bold flex items-center gap-1 transition-all cursor-pointer text-[10px] ${
-                              formData.mostrar_envio_gratis !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                              formData.mostrar_envio_gratis ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                             }`}
                           >
-                            {formData.mostrar_envio_gratis !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                            <span>{formData.mostrar_envio_gratis !== false ? 'ACTIVO' : 'INACTIVO'}</span>
+                            {formData.mostrar_envio_gratis ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                            <span>{formData.mostrar_envio_gratis ? 'ACTIVO' : 'INACTIVO'}</span>
                           </button>
                         </div>
-                        {formData.mostrar_envio_gratis !== false && (
+                        {formData.mostrar_envio_gratis && (
                           <div>
                             <label className="block text-[11px] font-medium text-slate-600 mb-1">Mínimo en Compra ($)</label>
                             <input
@@ -642,13 +663,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </label>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, mostrar_preguntas_frecuentes: formData.mostrar_preguntas_frecuentes === false ? true : false })}
+                          onClick={() => setFormData({ ...formData, mostrar_preguntas_frecuentes: !formData.mostrar_preguntas_frecuentes })}
                           className={`px-3 py-1 rounded-full font-bold flex items-center gap-1.5 transition-all cursor-pointer text-xs ${
-                            formData.mostrar_preguntas_frecuentes !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                            formData.mostrar_preguntas_frecuentes ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                           }`}
                         >
-                          {formData.mostrar_preguntas_frecuentes !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                          <span>{formData.mostrar_preguntas_frecuentes !== false ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
+                          {formData.mostrar_preguntas_frecuentes ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          <span>{formData.mostrar_preguntas_frecuentes ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
                         </button>
                       </div>
                       <textarea
@@ -669,13 +690,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </label>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, mostrar_medios_pago: formData.mostrar_medios_pago === false ? true : false })}
+                          onClick={() => setFormData({ ...formData, mostrar_medios_pago: !formData.mostrar_medios_pago })}
                           className={`px-3 py-1 rounded-full font-bold flex items-center gap-1.5 transition-all cursor-pointer text-xs ${
-                            formData.mostrar_medios_pago !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                            formData.mostrar_medios_pago ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                           }`}
                         >
-                          {formData.mostrar_medios_pago !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                          <span>{formData.mostrar_medios_pago !== false ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
+                          {formData.mostrar_medios_pago ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          <span>{formData.mostrar_medios_pago ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
                         </button>
                       </div>
                       <textarea
@@ -696,13 +717,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </label>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, mostrar_seguimiento_envio: formData.mostrar_seguimiento_envio === false ? true : false })}
+                          onClick={() => setFormData({ ...formData, mostrar_seguimiento_envio: !formData.mostrar_seguimiento_envio })}
                           className={`px-3 py-1 rounded-full font-bold flex items-center gap-1.5 transition-all cursor-pointer text-xs ${
-                            formData.mostrar_seguimiento_envio !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                            formData.mostrar_seguimiento_envio ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                           }`}
                         >
-                          {formData.mostrar_seguimiento_envio !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                          <span>{formData.mostrar_seguimiento_envio !== false ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
+                          {formData.mostrar_seguimiento_envio ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          <span>{formData.mostrar_seguimiento_envio ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
                         </button>
                       </div>
                       <textarea
@@ -723,13 +744,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                         </label>
                         <button
                           type="button"
-                          onClick={() => setFormData({ ...formData, mostrar_garantia: formData.mostrar_garantia === false ? true : false })}
+                          onClick={() => setFormData({ ...formData, mostrar_garantia: !formData.mostrar_garantia })}
                           className={`px-3 py-1 rounded-full font-bold flex items-center gap-1.5 transition-all cursor-pointer text-xs ${
-                            formData.mostrar_garantia !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                            formData.mostrar_garantia ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                           }`}
                         >
-                          {formData.mostrar_garantia !== false ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
-                          <span>{formData.mostrar_garantia !== false ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
+                          {formData.mostrar_garantia ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                          <span>{formData.mostrar_garantia ? 'MOSTRAR EN TIENDA' : 'OCULTO'}</span>
                         </button>
                       </div>
                       <textarea
@@ -749,13 +770,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       </div>
                       <button
                         type="button"
-                        onClick={() => setFormData({ ...formData, mostrar_newsletter: formData.mostrar_newsletter === false ? true : false })}
+                        onClick={() => setFormData({ ...formData, mostrar_newsletter: !formData.mostrar_newsletter })}
                         className={`px-4 py-1.5 rounded-full font-bold flex items-center gap-2 transition-all cursor-pointer text-xs ${
-                          formData.mostrar_newsletter !== false ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
+                          formData.mostrar_newsletter ? 'bg-emerald-600 text-white' : 'bg-slate-300 text-slate-700'
                         }`}
                       >
-                        {formData.mostrar_newsletter !== false ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
-                        <span>{formData.mostrar_newsletter !== false ? 'MOSTRAR' : 'OCULTO'}</span>
+                        {formData.mostrar_newsletter ? <ToggleRight className="w-5 h-5" /> : <ToggleLeft className="w-5 h-5" />}
+                        <span>{formData.mostrar_newsletter ? 'MOSTRAR' : 'OCULTO'}</span>
                       </button>
                     </div>
 
