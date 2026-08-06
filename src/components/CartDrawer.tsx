@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { X, ShoppingBag, Trash2, ArrowRight, Plus, Minus } from 'lucide-react';
 import { CartItem } from '../types';
 
@@ -19,32 +19,12 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onRemoveItem,
   onProceedToCheckout,
 }) => {
-  const [couponCode, setCouponCode] = useState('');
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [couponMessage, setCouponMessage] = useState('');
-
   if (!isOpen) return null;
 
   const subtotal = items.reduce((acc, item) => {
     const itemPrice = item.product.precio || item.product.price || 0;
     return acc + itemPrice * item.quantity;
   }, 0);
-
-  const discountAmount = Math.round(subtotal * (discountPercent / 100));
-  const total = Math.max(0, subtotal - discountAmount);
-
-  const applyCoupon = () => {
-    const code = couponCode.trim().toUpperCase();
-    if (code === 'BARMINA10') {
-      setDiscountPercent(10);
-      setCouponMessage('¡Cupón 10% OFF aplicado!');
-    } else if (code === 'BIENVENIDA') {
-      setDiscountPercent(15);
-      setCouponMessage('¡Cupón 15% OFF de Bienvenida aplicado!');
-    } else {
-      setCouponMessage('Cupón inválido. Probá con "BARMINA10" o "BIENVENIDA"');
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
@@ -161,47 +141,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         {items.length > 0 && (
           <div className="bg-white p-5 border-t border-[#e6e2da] space-y-3">
             
-            {/* Promo code input */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Código de descuento (Ej: BARMINA10)"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
-                className="flex-1 bg-[#f5f1e9] text-xs px-3 py-2 rounded-xl border border-[#d1cdc7] focus:outline-none focus:border-[#004080]"
-              />
-              <button
-                onClick={applyCoupon}
-                className="bg-[#004080] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#002a58] transition-colors"
-              >
-                Aplicar
-              </button>
-            </div>
-            {couponMessage && (
-              <p className={`text-[11px] font-semibold ${discountPercent > 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-                {couponMessage}
-              </p>
-            )}
-
             {/* Totals Summary */}
-            <div className="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-[#f0eded]">
+            <div className="space-y-1.5 text-xs text-slate-600 pt-1">
               <div className="flex justify-between">
                 <span>Total parcial:</span>
                 <span className="font-semibold text-slate-800">${subtotal.toLocaleString('es-AR')}</span>
               </div>
-              {discountAmount > 0 && (
-                <div className="flex justify-between text-emerald-700 font-semibold">
-                  <span>Descuento aplicado:</span>
-                  <span>-${discountAmount.toLocaleString('es-AR')}</span>
-                </div>
-              )}
               <div className="flex justify-between">
                 <span>Envío:</span>
                 <span className="text-emerald-700 font-semibold">A coordinar</span>
               </div>
               <div className="flex justify-between text-base font-extrabold text-[#004080] pt-2 border-t border-[#f0eded]">
                 <span>Total estimado:</span>
-                <span>${total.toLocaleString('es-AR')}</span>
+                <span>${subtotal.toLocaleString('es-AR')}</span>
               </div>
             </div>
 
