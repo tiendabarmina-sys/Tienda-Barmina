@@ -4,8 +4,6 @@ import { fetchProducts, fetchStoreConfig, saveStoreConfigToSupabase } from './li
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
-import { CategoryGrid } from './components/CategoryGrid';
-import { AboutSection } from './components/AboutSection';
 import { FilterBar } from './components/FilterBar';
 import { ProductCard } from './components/ProductCard';
 import { ProductDetailModal } from './components/ProductDetailModal';
@@ -223,7 +221,6 @@ export default function App() {
 
       <main className="flex-1">
         
-        {/* Banner Principal Limpio */}
         <Hero
           config={config}
           onExplore={() => {
@@ -232,15 +229,6 @@ export default function App() {
           }}
         />
 
-        {/* Grilla de Categorías Destacadas */}
-        <CategoryGrid 
-          onSelectCategory={(cat) => setFilters((prev) => ({ ...prev, category: cat }))} 
-        />
-
-        {/* Sección Institucional */}
-        <AboutSection />
-
-        {/* Catálogo de Productos */}
         <section id="catalog-section" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between mb-6 pb-3 border-b border-[#e6e2da]">
             <div>
