@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, ShoppingBag, Trash2, ArrowRight, ShieldCheck, Truck, Percent, Plus, Minus, CreditCard } from 'lucide-react';
+import { X, ShoppingBag, Trash2, ArrowRight, Plus, Minus } from 'lucide-react';
 import { CartItem } from '../types';
 
 interface CartDrawerProps {
@@ -9,7 +9,6 @@ interface CartDrawerProps {
   onUpdateQuantity: (productId: string | number, delta: number) => void;
   onRemoveItem: (productId: string | number) => void;
   onProceedToCheckout: () => void;
-  freeShippingMin?: number;
 }
 
 export const CartDrawer: React.FC<CartDrawerProps> = ({
@@ -19,7 +18,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
   onUpdateQuantity,
   onRemoveItem,
   onProceedToCheckout,
-  freeShippingMin = 60000
 }) => {
   const [couponCode, setCouponCode] = useState('');
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -34,9 +32,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const discountAmount = Math.round(subtotal * (discountPercent / 100));
   const total = Math.max(0, subtotal - discountAmount);
-  const freeShippingReached = subtotal >= freeShippingMin;
-  const missingForFreeShipping = Math.max(0, freeShippingMin - subtotal);
-  const freeShippingProgress = Math.min(100, (subtotal / freeShippingMin) * 100);
 
   const applyCoupon = () => {
     const code = couponCode.trim().toUpperCase();
@@ -78,27 +73,6 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
           >
             <X className="w-5 h-5" />
           </button>
-        </div>
-
-        {/* Free Shipping Progress Bar */}
-        <div className="bg-[#002a58] text-white p-4 text-xs space-y-2">
-          {freeShippingReached ? (
-            <div className="flex items-center gap-2 font-semibold text-emerald-300">
-              <Truck className="w-4 h-4 text-emerald-400" />
-              <span>¡Felicitaciones! Tenés ENVÍO GRATIS asegurado 🎉</span>
-            </div>
-          ) : (
-            <div className="flex items-center justify-between">
-              <span>Te faltan <strong className="text-amber-300">${missingForFreeShipping.toLocaleString('es-AR')}</strong> para Envío Gratis</span>
-              <span className="font-mono text-[10px] opacity-80">{Math.round(freeShippingProgress)}%</span>
-            </div>
-          )}
-          <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
-            <div 
-              className="bg-emerald-400 h-full transition-all duration-500 rounded-full"
-              style={{ width: `${freeShippingProgress}%` }}
-            />
-          </div>
         </div>
 
         {/* Cart Items List */}
@@ -223,18 +197,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               )}
               <div className="flex justify-between">
                 <span>Envío:</span>
-                {freeShippingReached ? (
-                  <span className="text-emerald-700 font-bold uppercase text-[11px]">Gratis</span>
-                ) : (
-                  <span className="font-semibold text-slate-800">$4.500</span>
-                )}
+                <span className="text-emerald-700 font-semibold">A coordinar</span>
               </div>
               <div className="flex justify-between text-base font-extrabold text-[#004080] pt-2 border-t border-[#f0eded]">
                 <span>Total estimado:</span>
-                <span>${(total + (freeShippingReached ? 0 : 4500)).toLocaleString('es-AR')}</span>
+                <span>${total.toLocaleString('es-AR')}</span>
               </div>
               <p className="text-[10px] text-emerald-800 font-medium text-right">
-                O hasta 6 cuotas sin interés de ${Math.round((total + (freeShippingReached ? 0 : 4500)) / 6).toLocaleString('es-AR')}
+                O hasta 6 cuotas sin interés de ${Math.round(total / 6).toLocaleString('es-AR')}
               </p>
             </div>
 
