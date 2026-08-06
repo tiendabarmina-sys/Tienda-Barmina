@@ -90,16 +90,45 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // --- LÓGICA DE GUARDADO DE CONFIGURACIÓN ---
+ // --- LÓGICA DE GUARDADO DE CONFIGURACIÓN ---
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
     setConfigMsg(null);
 
     try {
+      // Objeto limpio que coincide 100% con las columnas de tu Supabase
       const payload = { 
         id: 1, 
-        ...formData,
+        nombre_tienda: formData.nombre_tienda || null,
+        email_contacto: formData.email_contacto || null,
+        whatsapp_numero: formData.whatsapp_numero || formData.telefono_whatsapp || null,
+        telefono_whatsapp: formData.telefono_whatsapp || formData.whatsapp_numero || null,
+        ubicacion: formData.ubicacion || formData.direccion || null,
+        direccion: formData.direccion || formData.ubicacion || null,
+        barra_anuncio: formData.barra_anuncio || formData.banner_anuncio || null,
+        banner_anuncio: formData.banner_anuncio || formData.barra_anuncio || null,
+        texto_bienvenida: formData.texto_bienvenida || formData.descripcion_tienda || null,
+        descripcion_tienda: formData.descripcion_tienda || formData.texto_bienvenida || null,
+        banner_url: formData.banner_url || null,
+        logo_url: formData.logo_url || null,
+        texto_cuotas: formData.texto_cuotas || null,
+        cuotas_sin_interes: formData.cuotas_sin_interes ? Number(formData.cuotas_sin_interes) : 6,
+        descuento_transferencia: formData.descuento_transferencia ? Number(formData.descuento_transferencia) : 15,
+        monto_envio_gratis: formData.monto_envio_gratis ? Number(formData.monto_envio_gratis) : 60000,
+        envio_gratis_minimo: formData.envio_gratis_minimo ? Number(formData.envio_gratis_minimo) : 60000,
+        instagram_url: formData.instagram_url || null,
+        facebook_url: formData.facebook_url || null,
+        tiktok_url: formData.tiktok_url || null,
+
+        // Usamos únicamente los nombres oficiales que sí están en la base de datos
+        texto_preguntas_frecuentes: formData.texto_preguntas_frecuentes || null,
+        texto_medios_pago: formData.texto_medios_pago || null,
+        texto_seguimiento_envio: formData.texto_seguimiento_envio || null,
+        texto_garantia: formData.texto_garantia || null,
+        texto_politicas: formData.texto_politicas || null,
+
+        // Valores Booleanos
         mostrar_cuotas: Boolean(formData.mostrar_cuotas),
         mostrar_descuento_transferencia: Boolean(formData.mostrar_descuento_transferencia),
         mostrar_envio_gratis: Boolean(formData.mostrar_envio_gratis),
@@ -129,7 +158,6 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setSavingConfig(false);
     }
   };
-
   // --- CREACIÓN DE PRODUCTO ---
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
