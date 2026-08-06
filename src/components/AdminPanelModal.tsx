@@ -33,7 +33,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
 
   const [activeTab, setActiveTab] = useState<'config' | 'policies' | 'products' | 'categories' | 'orders' | 'debug'>('config');
 
-  // Config state con valores booleanos estrictos para evitar reseteos
+  // Config state
   const [formData, setFormData] = useState<StoreConfig>({ ...config });
   const [savingConfig, setSavingConfig] = useState(false);
   const [configMsg, setConfigMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -69,7 +69,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     imagen_url: '',
     descripcion: '',
     destacado: true,
-    envio_gratis: true
+    envio_gratis: true,
+    nuevo: true
   });
   const [savingProduct, setSavingProduct] = useState(false);
   const [productMsg, setProductMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -90,14 +91,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
- // --- LÓGICA DE GUARDADO DE CONFIGURACIÓN ---
+  // --- LÓGICA DE GUARDADO DE CONFIGURACIÓN (LIMPIA Y SINCRONIZADA CON SQL) ---
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
     setConfigMsg(null);
 
     try {
-      // Objeto limpio que coincide 100% con las columnas de tu Supabase
       const payload = { 
         id: 1, 
         nombre_tienda: formData.nombre_tienda || null,
@@ -115,13 +115,13 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         texto_cuotas: formData.texto_cuotas || null,
         cuotas_sin_interes: formData.cuotas_sin_interes ? Number(formData.cuotas_sin_interes) : 6,
         descuento_transferencia: formData.descuento_transferencia ? Number(formData.descuento_transferencia) : 15,
-        monto_envio_gratis: formData.monto_envio_gratis ? Number(formData.monto_envio_gratis) : 60000,
-        envio_gratis_minimo: formData.envio_gratis_minimo ? Number(formData.envio_gratis_minimo) : 60000,
+        monto_envio_gratis: formData.monto_envio_gratis ? Number(formData.monto_envio_gratis) : (formData.envio_gratis_minimo ? Number(formData.envio_gratis_minimo) : 60000),
+        envio_gratis_minimo: formData.envio_gratis_minimo ? Number(formData.envio_gratis_minimo) : (formData.monto_envio_gratis ? Number(formData.monto_envio_gratis) : 60000),
         instagram_url: formData.instagram_url || null,
         facebook_url: formData.facebook_url || null,
         tiktok_url: formData.tiktok_url || null,
 
-        // Usamos únicamente los nombres oficiales que sí están en la base de datos
+        // Campos oficiales sincronizados con las columnas reales de Supabase
         texto_preguntas_frecuentes: formData.texto_preguntas_frecuentes || null,
         texto_medios_pago: formData.texto_medios_pago || null,
         texto_seguimiento_envio: formData.texto_seguimiento_envio || null,
@@ -158,6 +158,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
       setSavingConfig(false);
     }
   };
+
   // --- CREACIÓN DE PRODUCTO ---
   const handleCreateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -179,7 +180,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         imagen_url: newProduct.imagen_url || null,
         descripcion: newProduct.descripcion || '',
         destacado: Boolean(newProduct.destacado),
-        nuevo: true,
+        nuevo: Boolean(newProduct.nuevo ?? true),
         envio_gratis: Boolean(newProduct.envio_gratis)
       };
 
@@ -197,7 +198,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         imagen_url: '',
         descripcion: '',
         destacado: true,
-        envio_gratis: true
+        envio_gratis: true,
+        nuevo: true
       });
       onRefreshProducts();
     } catch (err: any) {
@@ -226,6 +228,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         imagen_url: editingProduct.imagen_url || null,
         descripcion: editingProduct.descripcion || '',
         destacado: Boolean(editingProduct.destacado),
+        nuevo: Boolean(editingProduct.nuevo),
         envio_gratis: Boolean(editingProduct.envio_gratis)
       };
 
@@ -703,8 +706,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       <textarea
                         rows={4}
                         placeholder="Escribí las preguntas y respuestas frecuentes..."
-                        value={formData.texto_preguntas_frecuentes || formData.preguntas_frecuentes || ''}
-                        onChange={(e) => setFormData({ ...formData, texto_preguntas_frecuentes: e.target.value, preguntas_frecuentes: e.target.value })}
+                        value={formData.texto_preguntas_frecuentes || ''}
+                        onChange={(e) => setFormData({ ...formData, texto_preguntas_frecuentes: e.target.value })}
                         className="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-[#004080] leading-relaxed bg-white"
                       />
                     </div>
@@ -730,8 +733,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       <textarea
                         rows={3}
                         placeholder="Explicación de tarjetas, cuotas y transferencia..."
-                        value={formData.texto_medios_pago || formData.medios_pago_info || ''}
-                        onChange={(e) => setFormData({ ...formData, texto_medios_pago: e.target.value, medios_pago_info: e.target.value })}
+                        value={formData.texto_medios_pago || ''}
+                        onChange={(e) => setFormData({ ...formData, texto_medios_pago: e.target.value })}
                         className="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-[#004080] leading-relaxed bg-white"
                       />
                     </div>
@@ -757,8 +760,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       <textarea
                         rows={3}
                         placeholder="Explicación de despachos y números de seguimiento..."
-                        value={formData.texto_seguimiento_envio || formData.seguimiento_envios_info || ''}
-                        onChange={(e) => setFormData({ ...formData, texto_seguimiento_envio: e.target.value, seguimiento_envios_info: e.target.value })}
+                        value={formData.texto_seguimiento_envio || ''}
+                        onChange={(e) => setFormData({ ...formData, texto_seguimiento_envio: e.target.value })}
                         className="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-[#004080] leading-relaxed bg-white"
                       />
                     </div>
@@ -784,8 +787,8 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       <textarea
                         rows={3}
                         placeholder="Información sobre la calidad artesanal, embalaje y garantía de fragancias y sahumerios..."
-                        value={formData.texto_politicas || formData.politicas_cambio_info || ''}
-                        onChange={(e) => setFormData({ ...formData, texto_politicas: e.target.value, politicas_cambio_info: e.target.value })}
+                        value={formData.texto_politicas || ''}
+                        onChange={(e) => setFormData({ ...formData, texto_politicas: e.target.value })}
                         className="w-full px-3 py-2 border rounded-xl focus:ring-2 focus:ring-[#004080] leading-relaxed bg-white"
                       />
                     </div>
