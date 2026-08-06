@@ -73,31 +73,23 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     }
   };
 
-  // --- LÓGICA ROBUSTA DE GUARDADO DE CONFIGURACIÓN ---
+  // --- LÓGICA LIMPIA Y DIRECTA DE GUARDADO DE CONFIGURACIÓN ---
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingConfig(true);
     setConfigMsg(null);
 
     try {
-      const payload = [{ id: 1, ...formData }];
+      const payload = { id: 1, ...formData };
 
-      // 1. Intentar en minúsculas 'configuracion'
-      let { error } = await supabase
+      // Apuntando directamente a la tabla 'configuracion'
+      const { error } = await supabase
         .from('configuracion')
-        .upsert(payload);
-
-      // 2. Si falla por nombre de tabla, intentar en mayúsculas 'Configuracion'
-      if (error) {
-        const res = await supabase
-          .from('Configuracion')
-          .upsert(payload);
-        error = res.error;
-      }
+        .upsert([payload]);
 
       if (error) throw error;
 
-      // 3. Actualizar el estado global de React
+      // Actualizar el estado global de React
       await onSaveConfig(formData);
       setConfigMsg({ type: 'success', text: '¡Configuración e información de la tienda guardada con éxito!' });
       setTimeout(() => setConfigMsg(null), 4000);
@@ -137,12 +129,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         envio_gratis: newProduct.envio_gratis ?? true
       };
 
-      let { error } = await supabase.from('productos').insert([payload]);
-
-      if (error) {
-        const res = await supabase.from('Productos').insert([payload]);
-        error = res.error;
-      }
+      const { error } = await supabase.from('productos').insert([payload]);
 
       if (error) throw error;
 
@@ -188,12 +175,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
         envio_gratis: editingProduct.envio_gratis ?? false
       };
 
-      let { error } = await supabase.from('productos').update(payload).eq('id', editingProduct.id);
-
-      if (error) {
-        const res = await supabase.from('Productos').update(payload).eq('id', editingProduct.id);
-        error = res.error;
-      }
+      const { error } = await supabase.from('productos').update(payload).eq('id', editingProduct.id);
 
       if (error) throw error;
 
@@ -213,13 +195,11 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
     if (!confirm('¿Estás seguro de eliminar este producto?')) return;
 
     try {
-      let { error } = await supabase.from('productos').delete().eq('id', productId);
-      if (error) {
-        await supabase.from('Productos').delete().eq('id', productId);
-      }
+      const { error } = await supabase.from('productos').delete().eq('id', productId);
+      if (error) throw error;
       onRefreshProducts();
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      console.error('Error al eliminar producto:', err);
     }
   };
 
@@ -1207,7 +1187,7 @@ export const AdminPanelModal: React.FC<AdminPanelModalProps> = ({
                       Status Conexión Supabase: {supabaseSource === 'supabase' ? 'CONECTADO Y ACTIVO' : 'MODO DEMO LOCAL'}
                     </p>
                     <p><strong>URL Supabase:</strong> {SUPABASE_URL}</p>
-                    <p><strong>Tablas activas:</strong> Productos, configuracion, pedidos</p>
+                    <p><strong>Tablas activas:</strong> productos, configuracion, pedidos</p>
                   </div>
 
                   <p className="text-slate-600 leading-relaxed">
