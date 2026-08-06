@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, ArrowRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, ArrowLeft, Loader2, MessageCircle } from 'lucide-react';
 import { CartItem, CustomerOrder } from '../types';
 import { createOrderInSupabase } from '../lib/supabase';
 
@@ -56,6 +56,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     setIsSubmitting(true);
     setDbStatusMsg('Conectando a Supabase para registrar la orden...');
 
+    const finalOrderId = `BM-${Math.floor(100000 + Math.random() * 900000)}`;
+
     const orderData: CustomerOrder = {
       nombre: formData.nombre || 'Cliente Barmina',
       email: formData.email || 'cliente@barmina.com',
@@ -64,7 +66,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       direccion: formData.direccion || 'A coordinar',
       ciudad: formData.ciudad || 'Buenos Aires',
       codigo_postal: formData.codigo_postal || '',
-      metodo_pago: formData.metodo_pago === 'transferencia' ? 'Transferencia Bancaria (15% OFF)' : formData.metodo_pago === 'cuotas' ? 'Tarjeta en Cuotas Sin Interés' : 'Mercado Pago',
+      metodo_pago: formData.metodo_pago === 'transferencia' ? 'Transferencia Bancaria (15% OFF)' : formData.metodo_pago === 'cuotas' ? 'Tarjeta de Crédito' : 'Mercado Pago',
       metodo_envio: formData.metodo_envio === 'coordinar' ? 'Coordinar envío con el vendedor' : 'Retiro en domicilio del vendedor',
       subtotal,
       descuento: discountAmount,
@@ -77,11 +79,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
     const res = await createOrderInSupabase(orderData);
     setIsSubmitting(false);
 
-    if (res.success && res.orderId) {
-      onOrderSuccess(res.orderId);
-    } else {
-      onOrderSuccess(`BM-${Math.floor(100000 + Math.random() * 900000)}`);
-    }
+    const generatedId = (res.success && res.orderId) ? res.orderId : finalOrderId;
+
+    // Disparar WhatsApp automáticamente con el detalle de la compra
+    const telefonoBarmina = "5491164504653"; // Tu número de WhatsApp
+    const listaProductos = items.map(i => `• ${i.quantity}x ${i.product.nombre} ($${((i.product.precio || i.product.price || 0) * i.quantity).toLocaleString('es-AR')})`).join('%0A');
+    const metodoEnvioTexto = formData.metodo_envio === 'retiro' ? 'Retiro en domicilio del vendedor' : 'Coordinar envío con el vendedor';
+    const metodoPagoTexto = formData.metodo_pago === 'transferencia' ? 'Transferencia Bancaria (15% OFF)' : formData.metodo_pago === 'cuotas' ? 'Tarjeta de Crédito' : 'Mercado Pago';
+
+    const mensajeWhatsApp = `¡Hola Barmina! 👋 Acabo de registrar el pedido *${generatedId}* en la tienda online.%0A%0A*Mis datos:*%0A- Nombre: ${formData.nombre}%0A- Teléfono: ${formData.telefono}%0A- Envío: ${metodoEnvioTexto}%0A- Pago elegido: ${metodoPagoTexto}%0A%0A*Productos:*%0A${listaProductos}%0A%0A*Total Final:* $${total.toLocaleString('es-AR')}%0A%0A¡Quiero coordinar el pago y la entrega!`;
+
+    window.open(`https://wa.me/${telefonoBarmina}?text=${mensajeWhatsApp}`, '_blank');
+
+    onOrderSuccess(generatedId);
   };
 
   return (
@@ -396,17 +406,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-[#004080] hover:bg-[#002a58] text-white text-xs font-bold py-3.5 px-7 rounded-xl flex items-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-3.5 px-6 rounded-xl flex items-center gap-2 shadow-lg disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Registrando pedido en Supabase...</span>
+                      <span>Registrando y abriendo WhatsApp...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-300" />
-                      <span>Confirmar & Pagar ${total.toLocaleString('es-AR')}</span>
+                      <MessageCircle className="w-4 h-4 text-white" />
+                      <span>Confirmar & Enviar a WhatsApp (${total.toLocaleString('es-AR')})</span>
                     </>
                   )}
                 </button>
